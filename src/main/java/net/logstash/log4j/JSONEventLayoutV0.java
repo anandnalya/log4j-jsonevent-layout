@@ -2,13 +2,14 @@ package net.logstash.log4j;
 
 import net.logstash.log4j.data.HostData;
 import net.minidev.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -33,10 +34,10 @@ public class JSONEventLayoutV0 extends Layout {
     private JSONObject logstashEvent;
 
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-    public static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", UTC);
+    public static final DateTimeFormatter ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     public static String dateFormat(long timestamp) {
-        return ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(timestamp);
+        return ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(Instant.ofEpochMilli(timestamp).atZone(ZoneId.of("UTC")).toLocalDateTime());
     }
 
     /**
@@ -79,7 +80,7 @@ public class JSONEventLayoutV0 extends Layout {
                 exceptionInformation.put("exception_message", throwableInformation.getThrowable().getMessage());
             }
             if (throwableInformation.getThrowableStrRep() != null) {
-                String stackTrace = StringUtils.join(throwableInformation.getThrowableStrRep(), "\n");
+                String stackTrace = String.join("\n", throwableInformation.getThrowableStrRep());
                 exceptionInformation.put("stacktrace", stackTrace);
             }
             addFieldData("exception", exceptionInformation);
